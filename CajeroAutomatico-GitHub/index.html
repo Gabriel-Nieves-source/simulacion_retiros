@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cajero Automático UMB</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+*{box-sizing:border-box} body{margin:0} [hidden]{display:none!important} img{max-width:100%}
+</style>
+<meta name="theme-color" content="#0F2A44">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cajero UMB">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: una sola columna tipo pantalla de cajero; marco azul noche, pantalla clara, teclas grandes para el pulgar */
+:root{
+  --marco:#0F2A44; --pantalla:#F4F7FA; --superficie:#FFFFFF; --texto:#1B2631; --suave:#5D6D7E;
+  --linea:#D5DEE6; --primario:#1565C0; --primario-2:#0D47A1; --exito:#2E7D32; --peligro:#C62828; --neutro:#546E7A;
+  --sobre-marco:#FFFFFF; --tarjeta-a:#1565C0; --tarjeta-b:#0B3A6E;
+  --f-display:"Space Grotesk",system-ui,sans-serif; --f-texto:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --marco:#08182A; --pantalla:#102236; --superficie:#16304A; --texto:#E6EDF4; --suave:#9DB0C3;
+  --linea:#26445F; --primario:#3C8CE7; --primario-2:#2A6FC2; --exito:#43A047; --peligro:#E5534B; --neutro:#5F7A8A;
+  --sobre-marco:#E6EDF4; --tarjeta-a:#2A6FC2; --tarjeta-b:#0B2A4E; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --marco:#08182A; --pantalla:#102236; --superficie:#16304A; --texto:#E6EDF4; --suave:#9DB0C3;
+  --linea:#26445F; --primario:#3C8CE7; --primario-2:#2A6FC2; --exito:#43A047; --peligro:#E5534B; --neutro:#5F7A8A;
+  --sobre-marco:#E6EDF4; --tarjeta-a:#2A6FC2; --tarjeta-b:#0B2A4E; color-scheme:dark}
+
+html,body{height:100%}
+body{background:var(--marco);color:var(--texto);font-family:var(--f-texto);font-size:16px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px;
+  display:flex;flex-direction:column;align-items:center;-webkit-tap-highlight-color:transparent}
+.marca{color:var(--sobre-marco);font-family:var(--f-display);font-weight:700;font-size:15px;letter-spacing:.06em;text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;padding-block:6px 12px}
+.marca span{opacity:.6;font-weight:500}
+.cajero{width:100%;max-width:440px;flex:1;display:flex;flex-direction:column;min-height:0}
+.pantalla{background:var(--pantalla);border-radius:18px;padding:22px 18px;flex:1;display:flex;flex-direction:column;gap:16px;
+  box-shadow:inset 0 0 0 3px rgba(144,164,174,.35);overflow-y:auto;min-height:0}
+.ranura{height:8px;width:46%;margin:14px auto 2px;border-radius:6px;background:rgba(255,255,255,.12);box-shadow:inset 0 2px 3px rgba(0,0,0,.5)}
+h1{font-family:var(--f-display);font-size:26px;margin:0;text-align:center;text-wrap:balance}
+.sub{color:var(--suave);text-align:center;margin:-8px 0 0;font-size:14px;text-wrap:balance}
+label{font-weight:600;font-size:13px;display:block;margin-bottom:6px}
+.campo{display:flex;flex-direction:column}
+input{width:100%;box-sizing:border-box;font-family:var(--f-mono);font-size:20px;text-align:center;padding:13px 12px;border-radius:12px;
+  border:1.5px solid var(--linea);background:var(--superficie);color:var(--texto);outline:none}
+input.nombre{font-family:var(--f-texto);font-size:18px}
+input:focus{border-color:var(--primario);box-shadow:0 0 0 3px color-mix(in srgb,var(--primario) 25%,transparent)}
+.btn{font-family:var(--f-texto);font-weight:600;font-size:16px;border:0;border-radius:12px;padding:15px 14px;color:#fff;background:var(--primario);
+  cursor:pointer;min-height:52px;transition:transform .08s,filter .15s}
+.btn:active{transform:scale(.97)}
+.btn:focus-visible{outline:3px solid var(--texto);outline-offset:2px}
+.btn.exito{background:var(--exito)} .btn.peligro{background:var(--peligro)} .btn.neutro{background:var(--neutro)} .btn.oscuro{background:var(--primario-2)}
+.btn.texto{background:transparent;color:var(--primario);min-height:auto;padding:8px}
+.pila{display:flex;flex-direction:column;gap:12px}
+.rejilla{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rejilla .btn{min-height:76px}
+.btn.ancho{grid-column:1/-1}
+.ayuda{font-size:12px;color:var(--suave);text-align:center;font-style:italic}
+.empuje{margin-top:auto}
+
+/* Tarjeta bancaria del menú */
+.tarjeta{border-radius:16px;padding:16px 18px;color:#fff;background:linear-gradient(135deg,var(--tarjeta-a),var(--tarjeta-b));
+  aspect-ratio:1.586;max-width:100%;max-height:190px;display:flex;flex-direction:column;justify-content:space-between;box-sizing:border-box;position:relative;overflow:hidden}
+.tarjeta::after{content:"";position:absolute;right:-40px;top:-40px;width:160px;height:160px;border-radius:50%;background:rgba(255,255,255,.08)}
+.chip{width:38px;height:28px;border-radius:6px;background:linear-gradient(135deg,#E8C86A,#B8902F)}
+.tarjeta .num{font-family:var(--f-mono);font-size:17px;letter-spacing:.08em}
+.tarjeta .pie{display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;gap:8px}
+.tarjeta .pie b{display:block;font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.saludo{font-family:var(--f-display);font-size:20px;font-weight:700;margin:0}
+
+.saldo{font-family:var(--f-display);font-size:44px;font-weight:700;color:var(--exito);text-align:center;font-variant-numeric:tabular-nums;margin:12px 0}
+.recibo{background:var(--superficie);border:1px dashed var(--linea);border-radius:10px;padding:16px;font-family:var(--f-mono);font-size:14px;line-height:1.7}
+.recibo .fila{display:flex;justify-content:space-between;gap:12px}
+.recibo .fila span:last-child{text-align:right;font-variant-numeric:tabular-nums}
+.recibo hr{border:0;border-top:1px dashed var(--linea);margin:8px 0}
+.recibo .centro{text-align:center}
+h1.ok{color:var(--exito)}
+
+.movs{display:flex;flex-direction:column;gap:8px}
+.mov{display:grid;grid-template-columns:1fr auto;gap:2px 12px;background:var(--superficie);border-radius:10px;padding:10px 12px;border:1px solid var(--linea)}
+.mov .tipo{font-weight:600}
+.mov .valor{font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+.mov .valor.mas{color:var(--exito)} .mov .valor.menos{color:var(--peligro)}
+.mov .fecha,.mov .resto{font-size:12px;color:var(--suave)} .mov .resto{text-align:right;font-variant-numeric:tabular-nums}
+.vacio{color:var(--suave);text-align:center;padding:24px 0}
+
+/* Diálogo propio (el visor no permite alert/confirm) */
+.velo{position:fixed;inset:0;background:rgba(5,15,28,.6);display:flex;align-items:center;justify-content:center;z-index:20;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.dialogo{background:var(--superficie);color:var(--texto);border-radius:16px;padding:22px;width:100%;max-width:360px;display:flex;flex-direction:column;gap:14px;box-sizing:border-box}
+.dialogo h2{font-family:var(--f-display);margin:0;font-size:20px}
+.dialogo p{margin:0;line-height:1.5}
+.dialogo .destacado{font-family:var(--f-mono);font-size:18px;background:var(--pantalla);border-radius:8px;padding:10px;text-align:center;user-select:all}
+.dialogo.error h2{color:var(--peligro)} .dialogo.exito h2{color:var(--exito)}
+.dialogo .acciones{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.dialogo .acciones.uno{grid-template-columns:1fr}
+@media (prefers-reduced-motion:reduce){.btn{transition:none}}
+</style>
+
+</head>
+<body>
+<div class="marca">UMB Bank <span>· Cajero automático</span></div>
+<main class="cajero">
+  <section class="pantalla" id="pantalla" aria-live="polite"></section>
+  <div class="ranura" aria-hidden="true"></div>
+</main>
+<div class="velo" id="velo" hidden></div>
+
+<script>
+(() => {
+  // ------------------------------------------------------------ Reglas de negocio
+  const MAX_INTENTOS = 3, MULTIPLO_RETIRO = 10000, MAX_RETIRO = 2000000, MIN_CONSIG = 1000, MAX_CONSIG = 10000000;
+  const CLAVE = "cajero-umb-v1";
+  const CUENTAS_PRUEBA = [
+    { tarjeta: "4532015112830366", titular: "Ana María Pérez", pin: "1234", saldo: 1500000, bloqueada: false, movs: [] },
+    { tarjeta: "5425233430109903", titular: "Carlos Rodríguez", pin: "4321", saldo: 350000, bloqueada: false, movs: [] },
+    { tarjeta: "4916338506082832", titular: "Laura Gómez", pin: "1111", saldo: 5000000, bloqueada: false, movs: [] },
+  ];
+  class OperacionError extends Error {}
+
+  // Datos del banco: se guardan en este celular. Si el almacenamiento no está disponible, viven en memoria.
+  let banco;
+  try { banco = JSON.parse(localStorage.getItem(CLAVE)); } catch (e) { banco = null; }
+  if (!banco || !Array.isArray(banco.cuentas)) banco = { cuentas: structuredClone(CUENTAS_PRUEBA) };
+  const guardar = () => { try { localStorage.setItem(CLAVE, JSON.stringify(banco)); } catch (e) {} };
+  guardar();
+
+  const intentos = {};
+  let sesion = null;
+
+  const pesos = n => "$" + Math.round(n).toLocaleString("es-CO");
+  const enmascarar = t => "•••• •••• •••• " + t.slice(-4);
+  const agrupar = t => t.replace(/(\d{4})(?=\d)/g, "$1 ");
+  const ahora = () => new Date().toISOString();
+  const fechaTexto = iso => { const d = new Date(iso); const z = n => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${z(d.getMonth()+1)}-${z(d.getDate())} ${z(d.getHours())}:${z(d.getMinutes())}:${z(d.getSeconds())}`; };
+  const buscar = t => banco.cuentas.find(c => c.tarjeta === t);
+
+  function leerMonto(texto) {
+    const limpio = String(texto || "").replace(/[$.,\s]/g, "");
+    if (!limpio) throw new OperacionError("Ingrese un monto.");
+    if (!/^\d{1,12}$/.test(limpio)) throw new OperacionError("El monto solo puede contener números.");
+    return Number(limpio);
+  }
+  function digitoLuhn(s) { let suma = 0, doblar = true;
+    for (let i = s.length - 1; i >= 0; i--) { let d = +s[i]; if (doblar) { d *= 2; if (d > 9) d -= 9; } suma += d; doblar = !doblar; }
+    return (10 - suma % 10) % 10; }
+  function generarTarjeta() { let t;
+    do { const r = new Uint8Array(14); crypto.getRandomValues(r); const base = "4" + Array.from(r, x => x % 10).join(""); t = base + digitoLuhn(base); }
+    while (buscar(t)); return t; }
+  function registrar(c, tipo, valor) { c.movs.push({ fecha: ahora(), tipo, valor, saldo: c.saldo }); guardar(); }
+
+  function iniciarSesion(tarjetaTexto, pin) {
+    const t = String(tarjetaTexto).replace(/\s/g, "");
+    if (!/^\d{16}$/.test(t)) throw new OperacionError("El número de tarjeta debe tener 16 dígitos.");
+    if (!/^\d{4}$/.test(pin)) throw new OperacionError("El PIN debe tener 4 dígitos.");
+    const c = buscar(t);
+    if (!c) throw new OperacionError("Tarjeta no registrada en el sistema.");
+    if (c.bloqueada) throw new OperacionError("Tarjeta bloqueada. Comuníquese con su banco.");
+    if (c.pin !== pin) {
+      intentos[t] = (intentos[t] || 0) + 1;
+      if (intentos[t] >= MAX_INTENTOS) { c.bloqueada = true; guardar(); throw new OperacionError(`PIN incorrecto. Superó los ${MAX_INTENTOS} intentos: la tarjeta ha sido bloqueada.`); }
+      throw new OperacionError(`PIN incorrecto. Le quedan ${MAX_INTENTOS - intentos[t]} intento(s).`);
+    }
+    delete intentos[t]; sesion = c; return c;
+  }
+  function crearCuenta(nombreTexto, pin, pin2, saldoInicial) {
+    const nombre = String(nombreTexto || "").trim().replace(/\s+/g, " ");
+    if (nombre.length < 3) throw new OperacionError("Ingrese el nombre completo del titular.");
+    if (!/^[\p{L} ]+$/u.test(nombre)) throw new OperacionError("El nombre solo puede contener letras y espacios.");
+    if (!/^\d{4}$/.test(pin)) throw new OperacionError("El PIN debe tener exactamente 4 dígitos.");
+    if (new Set(pin).size === 1 || pin === "1234" || pin === "4321") throw new OperacionError("El PIN es muy fácil de adivinar. Elija otro.");
+    if (pin !== pin2) throw new OperacionError("La confirmación no coincide con el PIN.");
+    if (saldoInicial !== 0 && (saldoInicial < MIN_CONSIG || saldoInicial > MAX_CONSIG))
+      throw new OperacionError(`La consignación inicial debe ser $0 o estar entre ${pesos(MIN_CONSIG)} y ${pesos(MAX_CONSIG)}.`);
+    const c = { tarjeta: generarTarjeta(), titular: nombre, pin, saldo: saldoInicial, bloqueada: false, movs: [] };
+    if (saldoInicial > 0) c.movs.push({ fecha: ahora(), tipo: "CONSIGNACION", valor: saldoInicial, saldo: saldoInicial });
+    banco.cuentas.push(c); guardar(); return c;
+  }
+  function retirar(monto) {
+    const c = sesion;
+    if (monto <= 0) throw new OperacionError("El monto a retirar debe ser mayor a cero.");
+    if (monto % MULTIPLO_RETIRO !== 0) throw new OperacionError(`El cajero solo entrega billetes: el monto debe ser múltiplo de ${pesos(MULTIPLO_RETIRO)}.`);
+    if (monto > MAX_RETIRO) throw new OperacionError(`El retiro máximo por transacción es ${pesos(MAX_RETIRO)}.`);
+    if (monto > c.saldo) throw new OperacionError(`Saldo insuficiente. Su saldo disponible es ${pesos(c.saldo)}.`);
+    c.saldo -= monto; registrar(c, "RETIRO", monto); return c.saldo;
+  }
+  function consignar(monto) {
+    const c = sesion;
+    if (monto < MIN_CONSIG) throw new OperacionError(`La consignación mínima es ${pesos(MIN_CONSIG)}.`);
+    if (monto > MAX_CONSIG) throw new OperacionError(`La consignación máxima por transacción es ${pesos(MAX_CONSIG)}.`);
+    c.saldo += monto; registrar(c, "CONSIGNACION", monto); return c.saldo;
+  }
+  function consultarSaldo() { registrar(sesion, "CONSULTA", 0); return sesion.saldo; }
+
+  // ------------------------------------------------------------ Interfaz
+  const $p = document.getElementById("pantalla"), $velo = document.getElementById("velo");
+  const esc = s => String(s).replace(/[&<>"']/g, m => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[m]));
+  const NOMBRES = { RETIRO: "Retiro", CONSIGNACION: "Consignación", CONSULTA: "Consulta de saldo" };
+
+  function pintar(html, alMontar) { $p.innerHTML = html; $p.scrollTop = 0; alMontar && alMontar(); }
+  function on(id, fn) { const el = document.getElementById(id); el && el.addEventListener("click", fn); }
+  function enter(id, fn) { const el = document.getElementById(id); el && el.addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); fn(); } }); }
+
+  function dialogo({ tipo = "", titulo, cuerpo, aceptar = "Aceptar", cancelar = null }) {
+    return new Promise(res => {
+      $velo.innerHTML = `<div class="dialogo ${tipo}" role="dialog" aria-modal="true" aria-labelledby="dlg-t">
+        <h2 id="dlg-t">${esc(titulo)}</h2>${cuerpo}
+        <div class="acciones ${cancelar ? "" : "uno"}">
+          ${cancelar ? `<button class="btn neutro" id="dlg-no">${esc(cancelar)}</button>` : ""}
+          <button class="btn ${tipo === "error" ? "" : "exito"}" id="dlg-si">${esc(aceptar)}</button>
+        </div></div>`;
+      $velo.hidden = false;
+      const cerrar = v => { $velo.hidden = true; $velo.innerHTML = ""; res(v); };
+      document.getElementById("dlg-si").onclick = () => cerrar(true);
+      const no = document.getElementById("dlg-no"); if (no) no.onclick = () => cerrar(false);
+      document.getElementById("dlg-si").focus();
+    });
+  }
+  const error = msg => dialogo({ tipo: "error", titulo: "Operación no realizada", cuerpo: `<p>${esc(msg)}</p>` });
+  const intentar = fn => { try { return fn(); } catch (e) { if (e instanceof OperacionError) { error(e.message); return undefined; } throw e; } };
+
+  // Pantalla: ingreso
+  function vistaIngreso(tarjetaPrevia = "") {
+    pintar(`
+      <h1>Bienvenido</h1>
+      <p class="sub">Ingrese su tarjeta y su clave personal (PIN)</p>
+      <div class="pila">
+        <div class="campo"><label for="tarjeta">Número de tarjeta (16 dígitos)</label>
+          <input id="tarjeta" inputmode="numeric" autocomplete="off" maxlength="19" placeholder="0000 0000 0000 0000" value="${esc(tarjetaPrevia)}"></div>
+        <div class="campo"><label for="pin">PIN (4 dígitos)</label>
+          <input id="pin" type="password" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="••••"></div>
+        <button class="btn" id="ingresar">Ingresar</button>
+        <button class="btn exito" id="nueva">¿No tiene cuenta? Crear cuenta nueva</button>
+      </div>
+      <p class="ayuda empuje">Cuenta de prueba: 4532 0151 1283 0366 · PIN 1234</p>`, () => {
+      const t = document.getElementById("tarjeta");
+      t.addEventListener("input", () => { const d = t.value.replace(/\D/g, "").slice(0, 16); t.value = agrupar(d); });
+      const entrar = () => { const pin = document.getElementById("pin");
+        const c = intentar(() => iniciarSesion(t.value, pin.value)); pin.value = ""; if (c) vistaMenu(); };
+      on("ingresar", entrar); enter("pin", entrar); enter("tarjeta", () => document.getElementById("pin").focus());
+      on("nueva", vistaRegistro);
+    });
+  }
+
+  // Pantalla: registro
+  function vistaRegistro() {
+    pintar(`
+      <h1>Crear cuenta nueva</h1>
+      <p class="sub">El sistema le asignará un número de tarjeta</p>
+      <div class="pila">
+        <div class="campo"><label for="r-nombre">Nombre completo del titular</label><input id="r-nombre" class="nombre" autocomplete="name" placeholder="Ej. Pedro Martínez"></div>
+        <div class="campo"><label for="r-pin">PIN (4 dígitos)</label><input id="r-pin" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••"></div>
+        <div class="campo"><label for="r-pin2">Confirmar PIN</label><input id="r-pin2" type="password" inputmode="numeric" maxlength="4" autocomplete="off" placeholder="••••"></div>
+        <div class="campo"><label for="r-saldo">Consignación inicial (opcional)</label><input id="r-saldo" inputmode="numeric" placeholder="$0"></div>
+      </div>
+      <div class="rejilla empuje" style="grid-template-columns:1fr 1fr">
+        <button class="btn neutro" id="cancelar" style="min-height:52px">Cancelar</button>
+        <button class="btn exito" id="crear" style="min-height:52px">Crear cuenta</button>
+      </div>`, () => {
+      formatearMonto("r-saldo");
+      const crear = () => {
+        const txtSaldo = document.getElementById("r-saldo").value.trim();
+        const c = intentar(() => crearCuenta(document.getElementById("r-nombre").value, document.getElementById("r-pin").value,
+          document.getElementById("r-pin2").value, txtSaldo ? leerMonto(txtSaldo) : 0));
+        if (!c) return;
+        dialogo({ tipo: "exito", titulo: "¡Cuenta creada con éxito!", aceptar: "Ir a ingresar",
+          cuerpo: `<p>Titular: <b>${esc(c.titular)}</b><br>Saldo inicial: <b>${pesos(c.saldo)}</b></p>
+                   <p>Su número de tarjeta es:</p><div class="destacado">${agrupar(c.tarjeta)}</div>
+                   <p class="ayuda" style="font-style:normal">Anótelo: lo necesitará para ingresar.</p>` })
+          .then(() => { vistaIngreso(agrupar(c.tarjeta)); document.getElementById("pin").focus(); });
+      };
+      on("crear", crear); enter("r-saldo", crear); on("cancelar", () => vistaIngreso());
+      document.getElementById("r-nombre").focus();
+    });
+  }
+
+  // Pantalla: menú
+  function vistaMenu() {
+    const c = sesion;
+    pintar(`
+      <p class="saludo">Hola, ${esc(c.titular.split(" ")[0])}</p>
+      <div class="tarjeta" aria-label="Tarjeta ${enmascarar(c.tarjeta)}">
+        <div class="chip"></div>
+        <div class="num">${enmascarar(c.tarjeta)}</div>
+        <div class="pie"><div>Titular<b>${esc(c.titular)}</b></div><div>UMB Bank</div></div>
+      </div>
+      <p class="sub" style="margin:0">¿Qué desea hacer?</p>
+      <div class="rejilla">
+        <button class="btn" id="m-retiro">Retirar dinero</button>
+        <button class="btn" id="m-consig">Consignar</button>
+        <button class="btn" id="m-saldo">Consultar saldo</button>
+        <button class="btn" id="m-movs">Últimos movimientos</button>
+        <button class="btn peligro ancho" id="m-salir" style="min-height:56px">Salir / Retirar tarjeta</button>
+      </div>`, () => {
+      on("m-retiro", vistaRetiro); on("m-consig", vistaConsignacion);
+      on("m-saldo", () => { const s = consultarSaldo(); vistaSaldo(s); });
+      on("m-movs", vistaMovimientos);
+      on("m-salir", () => { sesion = null; dialogo({ titulo: "Sesión finalizada", cuerpo: "<p>Gracias por usar nuestro cajero. No olvide retirar su tarjeta.</p>" }).then(() => vistaIngreso()); });
+    });
+  }
+  const volver = `<button class="btn neutro empuje" id="volver">Volver al menú</button>`;
+
+  function formatearMonto(id) {
+    const el = document.getElementById(id);
+    el.addEventListener("input", () => { const d = el.value.replace(/\D/g, "").slice(0, 12); el.value = d ? pesos(+d) : ""; });
+  }
+
+  // Pantalla: retiro
+  function vistaRetiro() {
+    const rapidos = [20000, 50000, 100000, 200000, 300000, 500000];
+    pintar(`
+      <h1>Retiro</h1>
+      <p class="sub">Seleccione un monto o escriba otro valor (múltiplo de $10.000)</p>
+      <div class="rejilla">${rapidos.map(m => `<button class="btn oscuro" data-m="${m}">${pesos(m)}</button>`).join("")}</div>
+      <div class="campo"><label for="otro">Otro valor</label><input id="otro" inputmode="numeric" placeholder="$0"></div>
+      <button class="btn exito" id="retirar-otro">Retirar otro valor</button>
+      ${volver}`, () => {
+      formatearMonto("otro");
+      $p.querySelectorAll("[data-m]").forEach(b => b.addEventListener("click", () => confirmarRetiro(+b.dataset.m)));
+      const otro = () => { const m = intentar(() => leerMonto(document.getElementById("otro").value)); if (m !== undefined) confirmarRetiro(m); };
+      on("retirar-otro", otro); enter("otro", otro); on("volver", vistaMenu);
+    });
+  }
+  function confirmarRetiro(monto) {
+    dialogo({ titulo: "Confirmar retiro", cuerpo: `<p>¿Confirma el retiro de <b>${pesos(monto)}</b>?</p>`, aceptar: "Sí, retirar", cancelar: "No" })
+      .then(ok => { if (!ok) return; const s = intentar(() => retirar(monto)); if (s !== undefined) vistaComprobante("Retiro exitoso", "RETIRO", monto, s); });
+  }
+
+  // Pantalla: consignación
+  function vistaConsignacion() {
+    pintar(`
+      <h1>Consignación</h1>
+      <p class="sub">Ingrese el valor a consignar en su cuenta</p>
+      <div class="campo"><label for="valor">Valor (mínimo $1.000, máximo $10.000.000)</label><input id="valor" inputmode="numeric" placeholder="$0"></div>
+      <button class="btn exito" id="consignar">Consignar</button>
+      ${volver}`, () => {
+      formatearMonto("valor");
+      const hacer = () => {
+        const m = intentar(() => leerMonto(document.getElementById("valor").value)); if (m === undefined) return;
+        dialogo({ titulo: "Confirmar consignación", cuerpo: `<p>¿Confirma la consignación de <b>${pesos(m)}</b>?</p>`, aceptar: "Sí, consignar", cancelar: "No" })
+          .then(ok => { if (!ok) return; const s = intentar(() => consignar(m)); if (s !== undefined) vistaComprobante("Consignación exitosa", "CONSIGNACION", m, s); });
+      };
+      on("consignar", hacer); enter("valor", hacer); on("volver", vistaMenu);
+      document.getElementById("valor").focus();
+    });
+  }
+
+  // Pantalla: saldo
+  function vistaSaldo(saldo) {
+    pintar(`<h1 style="margin-top:24px">Saldo disponible</h1><div class="saldo">${pesos(saldo)}</div>
+      <p class="sub">Tarjeta ${enmascarar(sesion.tarjeta)}</p>${volver}`, () => on("volver", vistaMenu));
+  }
+
+  // Pantalla: comprobante
+  function vistaComprobante(titulo, tipo, monto, saldo) {
+    const c = sesion, ult = c.movs[c.movs.length - 1];
+    const fila = (a, b) => `<div class="fila"><span>${a}</span><span>${b}</span></div>`;
+    pintar(`<h1 class="ok">${titulo}</h1>
+      <div class="recibo">
+        <div class="centro">COMPROBANTE DE TRANSACCIÓN</div><hr>
+        ${fila("Fecha", fechaTexto(ult.fecha))}${fila("Tarjeta", enmascarar(c.tarjeta))}${fila("Titular", esc(c.titular))}
+        ${fila("Operación", NOMBRES[tipo])}${fila("Valor", pesos(monto))}${fila("Saldo", pesos(saldo))}
+        <hr><div class="centro">¡Gracias por su transacción!</div>
+      </div>${volver}`, () => on("volver", vistaMenu));
+  }
+
+  // Pantalla: movimientos
+  function vistaMovimientos() {
+    const movs = sesion.movs.slice(-10).reverse();
+    pintar(`<h1>Últimos movimientos</h1>
+      <div class="movs">${movs.length ? movs.map(m => `
+        <div class="mov">
+          <span class="tipo">${NOMBRES[m.tipo]}</span>
+          <span class="valor ${m.tipo === "RETIRO" ? "menos" : m.tipo === "CONSIGNACION" ? "mas" : ""}">${m.tipo === "CONSULTA" ? "—" : (m.tipo === "RETIRO" ? "−" : "+") + pesos(m.valor)}</span>
+          <span class="fecha">${fechaTexto(m.fecha)}</span>
+          <span class="resto">Saldo ${pesos(m.saldo)}</span>
+        </div>`).join("") : `<p class="vacio">Todavía no hay movimientos en esta cuenta.</p>`}</div>
+      ${volver}`, () => on("volver", vistaMenu));
+  }
+
+  vistaIngreso();
+})();
+</script>
+<script>
+if ("serviceWorker" in navigator) { window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {})); }
+</script>
+</body>
+</html>
